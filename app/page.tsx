@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import {
+  ArrowLeft,
   ArrowRight,
   Check,
   CircleDollarSign,
@@ -148,6 +149,7 @@ export default function Home() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [participantOpen, setParticipantOpen] = useState(false);
   const [expenseOpen, setExpenseOpen] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
@@ -201,6 +203,14 @@ export default function Home() {
     setExpenses(demoExpenses.map((expense) => ({ ...expense })));
     setPaidBy(demoParticipants[0].id);
     setMessage('Datos de prueba cargados');
+  }
+
+  function resetTrip() {
+    setParticipants([]);
+    setExpenses([]);
+    setPaidBy('');
+    setResetOpen(false);
+    setMessage('Volviste al inicio');
   }
 
   function addParticipant(event: FormEvent<HTMLFormElement>) {
@@ -265,16 +275,30 @@ export default function Home() {
               <p className="text-xs text-muted-foreground">Viaje entre amigos</p>
             </div>
           </div>
-          <Button
-            variant="outline"
-            size="lg"
-            className="h-10 rounded-xl bg-white px-3.5 shadow-sm"
-            onClick={() => setParticipantOpen(true)}
-          >
-            <UserRoundPlus data-icon="inline-start" />
-            <span className="hidden sm:inline">Agregar persona</span>
-            <span className="sm:hidden">Persona</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            {hasTripData && (
+              <Button
+                variant="ghost"
+                size="lg"
+                className="h-10 rounded-xl px-3 text-muted-foreground hover:bg-white hover:text-foreground"
+                onClick={() => setResetOpen(true)}
+                aria-label="Volver al inicio"
+              >
+                <ArrowLeft data-icon="inline-start" />
+                <span className="hidden sm:inline">Volver al inicio</span>
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="lg"
+              className="h-10 rounded-xl bg-white px-3.5 shadow-sm"
+              onClick={() => setParticipantOpen(true)}
+            >
+              <UserRoundPlus data-icon="inline-start" />
+              <span className="hidden sm:inline">Agregar persona</span>
+              <span className="sm:hidden">Persona</span>
+            </Button>
+          </div>
         </header>
 
         <section className="mt-7 overflow-hidden rounded-[28px] bg-hero px-6 py-7 text-white shadow-[0_24px_60px_rgba(28,68,62,0.16)] sm:px-9 sm:py-8">
@@ -512,6 +536,28 @@ export default function Home() {
           Los cambios se guardan automáticamente en este dispositivo.
         </footer>
       </div>
+
+      <Dialog open={resetOpen} onOpenChange={setResetOpen}>
+        <DialogContent className="rounded-3xl p-6 sm:max-w-md">
+          <DialogHeader>
+            <span className="mb-2 grid size-11 place-items-center rounded-2xl bg-secondary text-primary">
+              <ArrowLeft className="size-5" />
+            </span>
+            <DialogTitle className="text-xl font-extrabold tracking-tight">¿Volver al inicio?</DialogTitle>
+            <DialogDescription>
+              Se quitarán los participantes y gastos actuales para dejar el viaje vacío nuevamente.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="-mx-6 -mb-6 mt-3 px-6 py-4">
+            <Button type="button" variant="outline" size="lg" onClick={() => setResetOpen(false)}>
+              Continuar aquí
+            </Button>
+            <Button type="button" size="lg" onClick={resetTrip}>
+              Sí, volver al inicio
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={participantOpen} onOpenChange={setParticipantOpen}>
         <DialogContent className="rounded-3xl p-6 sm:max-w-md">
