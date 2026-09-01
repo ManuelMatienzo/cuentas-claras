@@ -2,7 +2,6 @@
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import {
-  ArrowLeft,
   ArrowRight,
   Check,
   CircleDollarSign,
@@ -149,7 +148,7 @@ export default function Home() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [participantOpen, setParticipantOpen] = useState(false);
   const [expenseOpen, setExpenseOpen] = useState(false);
-  const [resetOpen, setResetOpen] = useState(false);
+  const [clearOpen, setClearOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
@@ -205,12 +204,12 @@ export default function Home() {
     setMessage('Datos de prueba cargados');
   }
 
-  function resetTrip() {
+  function clearTrip() {
     setParticipants([]);
     setExpenses([]);
     setPaidBy('');
-    setResetOpen(false);
-    setMessage('Volviste al inicio');
+    setClearOpen(false);
+    setMessage('Datos eliminados');
   }
 
   function addParticipant(event: FormEvent<HTMLFormElement>) {
@@ -281,11 +280,11 @@ export default function Home() {
                 variant="ghost"
                 size="lg"
                 className="h-10 rounded-xl px-3 text-muted-foreground hover:bg-white hover:text-foreground"
-                onClick={() => setResetOpen(true)}
-                aria-label="Volver al inicio"
+                onClick={() => setClearOpen(true)}
+                aria-label="Limpiar todos los datos"
               >
-                <ArrowLeft data-icon="inline-start" />
-                <span className="hidden sm:inline">Volver al inicio</span>
+                <Trash2 data-icon="inline-start" />
+                <span className="hidden sm:inline">Limpiar datos</span>
               </Button>
             )}
             <Button
@@ -537,23 +536,23 @@ export default function Home() {
         </footer>
       </div>
 
-      <Dialog open={resetOpen} onOpenChange={setResetOpen}>
+      <Dialog open={clearOpen} onOpenChange={setClearOpen}>
         <DialogContent className="rounded-3xl p-6 sm:max-w-md">
           <DialogHeader>
             <span className="mb-2 grid size-11 place-items-center rounded-2xl bg-secondary text-primary">
-              <ArrowLeft className="size-5" />
+              <Trash2 className="size-5" />
             </span>
-            <DialogTitle className="text-xl font-extrabold tracking-tight">¿Volver al inicio?</DialogTitle>
+            <DialogTitle className="text-xl font-extrabold tracking-tight">¿Limpiar todos los datos?</DialogTitle>
             <DialogDescription>
-              Se quitarán los participantes y gastos actuales para dejar el viaje vacío nuevamente.
+              Se eliminarán los participantes y gastos actuales. La aplicación quedará vacía para comenzar un viaje nuevo.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="-mx-6 -mb-6 mt-3 px-6 py-4">
-            <Button type="button" variant="outline" size="lg" onClick={() => setResetOpen(false)}>
-              Continuar aquí
+            <Button type="button" variant="outline" size="lg" onClick={() => setClearOpen(false)}>
+              Cancelar
             </Button>
-            <Button type="button" size="lg" onClick={resetTrip}>
-              Sí, volver al inicio
+            <Button type="button" variant="destructive" size="lg" onClick={clearTrip}>
+              Sí, limpiar datos
             </Button>
           </DialogFooter>
         </DialogContent>
