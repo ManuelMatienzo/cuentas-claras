@@ -7,6 +7,7 @@ import {
   CircleDollarSign,
   Plus,
   ReceiptText,
+  Sparkles,
   Trash2,
   UserRoundPlus,
   UsersRound,
@@ -54,18 +55,20 @@ type Settlement = {
 
 const palette = ['#F36F45', '#2F766D', '#E4A93A', '#5964A6', '#A45672', '#4B84A8'];
 
-const initialParticipants: Participant[] = [
+const demoParticipants: Participant[] = [
   { id: 'ana', name: 'Ana', color: palette[0] },
   { id: 'bruno', name: 'Bruno', color: palette[1] },
   { id: 'carla', name: 'Carla', color: palette[2] },
   { id: 'diego', name: 'Diego', color: palette[3] },
 ];
 
-const initialExpenses: Expense[] = [
+const demoExpenses: Expense[] = [
   { id: 'hotel', description: 'Alojamiento', amount: 280, paidBy: 'ana', createdAt: 'Hoy' },
   { id: 'cena', description: 'Cena de bienvenida', amount: 96.4, paidBy: 'bruno', createdAt: 'Ayer' },
   { id: 'gasolina', description: 'Gasolina', amount: 51.4, paidBy: 'carla', createdAt: 'Ayer' },
 ];
+
+const STORAGE_KEY = 'cuentas-claras-data-v2';
 
 const money = new Intl.NumberFormat('es-BO', {
   style: 'currency',
@@ -141,20 +144,20 @@ function calculateSettlements(participants: Participant[], expenses: Expense[]) 
 }
 
 export default function Home() {
-  const [participants, setParticipants] = useState<Participant[]>(initialParticipants);
-  const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [participantOpen, setParticipantOpen] = useState(false);
   const [expenseOpen, setExpenseOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
-  const [paidBy, setPaidBy] = useState(initialParticipants[0].id);
+  const [paidBy, setPaidBy] = useState('');
   const [message, setMessage] = useState('');
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     try {
-      const saved = window.localStorage.getItem('cuentas-claras-data');
+      const saved = window.localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved) as { participants?: Participant[]; expenses?: Expense[] };
         if (Array.isArray(parsed.participants) && Array.isArray(parsed.expenses)) {
@@ -172,7 +175,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!ready) return;
-    window.localStorage.setItem('cuentas-claras-data', JSON.stringify({ participants, expenses }));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ participants, expenses }));
   }, [participants, expenses, ready]);
 
   useEffect(() => {
@@ -183,6 +186,7 @@ export default function Home() {
   }, [message]);
 
   const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const hasTripData = participants.length > 0 || expenses.length > 0;
   const { balances, settlements } = useMemo(
     () => calculateSettlements(participants, expenses),
     [participants, expenses],
@@ -190,6 +194,13 @@ export default function Home() {
 
   function personFor(id: string) {
     return participants.find((person) => person.id === id);
+  }
+
+  function loadDemoData() {
+    setParticipants(demoParticipants.map((person) => ({ ...person })));
+    setExpenses(demoExpenses.map((expense) => ({ ...expense })));
+    setPaidBy(demoParticipants[0].id);
+    setMessage('Datos de prueba cargados');
   }
 
   function addParticipant(event: FormEvent<HTMLFormElement>) {
@@ -268,14 +279,44 @@ export default function Home() {
 
         <section className="mt-7 overflow-hidden rounded-[28px] bg-hero px-6 py-7 text-white shadow-[0_24px_60px_rgba(28,68,62,0.16)] sm:px-9 sm:py-8">
           <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
-            <div>
+            <div className="max-w-2xl">
               <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-white/65">
                 <CircleDollarSign className="size-4" /> Resumen del viaje
               </p>
-              <p className="text-sm text-white/70">Gasto total entre todos</p>
-              <h1 className="mt-1 font-heading text-4xl font-black tracking-[-0.055em] sm:text-5xl">
-                {money.format(total)}
-              </h1>
+              {hasTripData ? (
+                <>
+                  <p className="text-sm text-white/70">Gasto total entre todos</p>
+                  <h1 className="mt-1 font-heading text-4xl font-black tracking-[-0.055em] sm:text-5xl">
+                    {money.format(total)}
+                  </h1>
+                </>
+              ) : (
+                <>
+                  <h1 className="font-heading text-3xl font-black tracking-[-0.05em] sm:text-4xl">
+                    Tu viaje empieza aquí
+                  </h1>
+                  <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/70">
+                    Agrega a tus amigos y registra los gastos desde cero, o carga un ejemplo para probar cómo funciona.
+                  </p>
+                  <div className="mt-5 flex flex-col gap-2.5 sm:flex-row">
+                    <Button
+                      size="lg"
+                      className="h-11 rounded-xl bg-white px-4 text-primary hover:bg-white/90"
+                      onClick={() => setParticipantOpen(true)}
+                    >
+                      <UserRoundPlus data-icon="inline-start" /> Agregar primera persona
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="h-11 rounded-xl border-white/25 bg-white/10 px-4 text-white hover:bg-white/20 hover:text-white"
+                      onClick={loadDemoData}
+                    >
+                      <Sparkles data-icon="inline-start" /> Cargar datos de prueba
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-3 sm:flex">
               <div className="min-w-[135px] rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur-sm">
@@ -328,7 +369,7 @@ export default function Home() {
                   })}
                 </div>
               ) : (
-                <EmptyState icon={UsersRound} title="Todavía no hay participantes" text="Agrega a tus amigos para comenzar a dividir los gastos." />
+                <EmptyState icon={UsersRound} title="Todavía no hay participantes" text="Agrega a tus amigos manualmente o carga los datos de prueba desde el resumen." />
               )}
             </section>
 
@@ -394,24 +435,30 @@ export default function Home() {
             <section className="surface-card p-5 sm:p-6">
               <p className="section-kicker"><CircleDollarSign className="size-4" /> Balance individual</p>
               <h2 className="section-title">Quién debe y quién recibe</h2>
-              <div className="mt-5 space-y-3">
-                {participants.map((person) => {
-                  const balance = (balances.get(person.id) ?? 0) / 100;
-                  const positive = balance > 0;
-                  return (
-                    <div key={person.id} className="flex items-center gap-3">
-                      <Avatar person={person} small />
-                      <p className="min-w-0 flex-1 truncate text-sm font-semibold">{person.name}</p>
-                      <div className="text-right">
-                        <p className={`text-sm font-black ${positive ? 'text-positive' : balance < 0 ? 'text-coral' : 'text-muted-foreground'}`}>
-                          {positive ? '+' : balance < 0 ? '−' : ''}{money.format(Math.abs(balance))}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground">{positive ? 'recibe' : balance < 0 ? 'debe' : 'a mano'}</p>
+              {participants.length ? (
+                <div className="mt-5 space-y-3">
+                  {participants.map((person) => {
+                    const balance = (balances.get(person.id) ?? 0) / 100;
+                    const positive = balance > 0;
+                    return (
+                      <div key={person.id} className="flex items-center gap-3">
+                        <Avatar person={person} small />
+                        <p className="min-w-0 flex-1 truncate text-sm font-semibold">{person.name}</p>
+                        <div className="text-right">
+                          <p className={`text-sm font-black ${positive ? 'text-positive' : balance < 0 ? 'text-coral' : 'text-muted-foreground'}`}>
+                            {positive ? '+' : balance < 0 ? '−' : ''}{money.format(Math.abs(balance))}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground">{positive ? 'recibe' : balance < 0 ? 'debe' : 'a mano'}</p>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="mt-5">
+                  <EmptyState icon={CircleDollarSign} title="Sin balances por calcular" text="Los saldos aparecerán cuando agregues participantes y gastos." />
+                </div>
+              )}
             </section>
 
             <section className="settlement-card p-5 sm:p-6">
@@ -425,7 +472,13 @@ export default function Home() {
                 </span>
               </div>
 
-              {settlements.length ? (
+              {!participants.length || !expenses.length ? (
+                <div className="mt-5 rounded-2xl border border-primary/10 bg-white/75 p-5 text-center">
+                  <ReceiptText className="mx-auto mb-2 size-5 text-primary" />
+                  <p className="text-sm font-bold">Aún no hay cuentas por saldar</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Completa el viaje para obtener un plan de pagos.</p>
+                </div>
+              ) : settlements.length ? (
                 <div className="mt-5 space-y-3">
                   {settlements.map((settlement, index) => (
                     <div key={`${settlement.from.id}-${settlement.to.id}-${index}`} className="rounded-2xl border border-primary/10 bg-white/75 p-3.5">
