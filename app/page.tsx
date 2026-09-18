@@ -188,6 +188,21 @@ export default function Home() {
 
   const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   const hasTripData = participants.length > 0 || expenses.length > 0;
+  const contributions = useMemo(
+    () =>
+      participants.map((person) => {
+        const paid = expenses
+          .filter((expense) => expense.paidBy === person.id)
+          .reduce((sum, expense) => sum + expense.amount, 0);
+
+        return {
+          person,
+          paid,
+          percentage: total > 0 ? (paid / total) * 100 : 0,
+        };
+      }),
+    [participants, expenses, total],
+  );
   const { balances, settlements } = useMemo(
     () => calculateSettlements(participants, expenses),
     [participants, expenses],
@@ -300,7 +315,7 @@ export default function Home() {
           </div>
         </header>
 
-        <section className="mt-7 overflow-hidden rounded-[28px] bg-hero px-6 py-7 text-white shadow-[0_24px_60px_rgba(28,68,62,0.16)] sm:px-9 sm:py-8">
+        <section className="trip-hero mt-7 overflow-hidden rounded-[28px] px-6 py-7 text-white shadow-[0_24px_60px_rgba(28,68,62,0.16)] sm:px-9 sm:py-8">
           <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
             <div className="max-w-2xl">
               <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-white/65">
@@ -312,6 +327,44 @@ export default function Home() {
                   <h1 className="mt-1 font-heading text-4xl font-black tracking-[-0.055em] sm:text-5xl">
                     {money.format(total)}
                   </h1>
+                  {total > 0 && (
+                    <div className="mt-6 max-w-xl">
+                      <div className="mb-2 flex items-center justify-between gap-3 text-xs font-semibold text-white/65">
+                        <span>Aportes del grupo</span>
+                        <span>{participants.length} participantes</span>
+                      </div>
+                      <div
+                        className="flex h-3 overflow-hidden rounded-full bg-black/15 ring-1 ring-white/10"
+                        role="img"
+                        aria-label="Distribución de aportes por participante"
+                      >
+                        {contributions
+                          .filter((entry) => entry.paid > 0)
+                          .map((entry) => (
+                            <span
+                              key={entry.person.id}
+                              className="h-full border-r border-white/25 last:border-r-0"
+                              style={{
+                                width: `${entry.percentage}%`,
+                                backgroundColor: entry.person.color,
+                              }}
+                            />
+                          ))}
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
+                        {contributions.map((entry) => (
+                          <div key={entry.person.id} className="flex items-center gap-1.5 text-xs text-white/75">
+                            <span
+                              className="size-2 rounded-full ring-2 ring-white/10"
+                              style={{ backgroundColor: entry.person.color }}
+                            />
+                            <span>{entry.person.name}</span>
+                            <strong className="text-white">{Math.round(entry.percentage)}%</strong>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </>
               ) : (
                 <>
